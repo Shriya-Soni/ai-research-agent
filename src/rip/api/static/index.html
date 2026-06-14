@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Research Intelligence Platform</title>
+  <style>
+    :root {
+      --bg: #0a0e17;
+      --surface: #111827;
+      --surface2: #1a2234;
+      --border: #2a3548;
+      --text: #e8edf5;
+      --muted: #8899b0;
+      --accent: #3b82f6;
+      --accent2: #8b5cf6;
+      --success: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    .header {
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+    }
+    .header h1 { font-size: 1.25rem; font-weight: 600; }
+    .header h1 span { color: var(--accent); }
+    .badge {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr 320px;
+      gap: 0;
+      min-height: calc(100vh - 57px);
+    }
+    .sidebar, .panel {
+      border-right: 1px solid var(--border);
+      padding: 1.25rem;
+      overflow-y: auto;
+    }
+    .panel { border-right: none; border-left: 1px solid var(--border); }
+    .main { padding: 1.5rem 2rem; overflow-y: auto; }
+    h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.75rem; }
+    .agent-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+    .agent-card .name { font-weight: 500; }
+    .agent-card .status { font-size: 0.75rem; margin-top: 0.25rem; }
+    .online { color: var(--success); }
+    .busy { color: var(--warn); }
+    .offline { color: var(--danger); }
+    .agent-card .hint { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+    .pipeline {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .pipe-step {
+      flex: 1;
+      min-width: 120px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      text-align: center;
+      font-size: 0.8rem;
+      transition: all 0.3s;
+    }
+    .pipe-step.active { border-color: var(--accent); background: #1e3a5f; }
+    .pipe-step.done { border-color: var(--success); }
+    .pipe-step .icon { font-size: 1.2rem; margin-bottom: 0.25rem; }
+    .search-box {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .search-box input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.85rem 1rem;
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+    }
+    .search-box input:focus { border-color: var(--accent); }
+    .search-box button {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: var(--radius);
+      padding: 0.85rem 1.5rem;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .search-box button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .report {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+    .report h3 { font-size: 1.1rem; margin-bottom: 0.75rem; }
+    .report .summary { color: var(--muted); margin-bottom: 1rem; white-space: pre-wrap; }
+    .finding { padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    .finding:last-child { border-bottom: none; }
+    .citation {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+    }
+    .citation .idx { color: var(--accent); font-weight: 600; }
+    .trace-event {
+      font-size: 0.78rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .trace-event .time { color: var(--accent2); }
+    .score-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+    .score-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--success)); border-radius: 3px; transition: width 0.5s; }
+    .empty { color: var(--muted); font-size: 0.9rem; text-align: center; padding: 3rem 1rem; }
+    .meta { display: flex; gap: 1rem; margin-bottom: 1rem; font-size: 0.85rem; }
+    .meta span { background: var(--surface2); padding: 0.3rem 0.7rem; border-radius: 6px; }
+    .section { margin-top: 1rem; }
+    .section h4 { font-size: 0.9rem; color: var(--accent); margin-bottom: 0.4rem; }
+    .paper-body { line-height: 1.75; font-size: 0.95rem; }
+    .paper-body h2 { font-size: 1.05rem; color: var(--accent); margin: 1.5rem 0 0.6rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+    .paper-body p { margin: 0.6rem 0; color: var(--text); }
+    .paper-body .cite { color: var(--accent2); font-weight: 600; text-decoration: none; cursor: pointer; }
+    .paper-body .cite:hover { text-decoration: underline; }
+    .ref-list { margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid var(--border); }
+    .ref-item { font-size: 0.85rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+    .ref-item .idx { color: var(--accent); font-weight: 700; margin-right: 0.4rem; }
+    .download-btn {
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+      padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; margin-left: auto;
+    }
+    .report-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar, .panel { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1><span>Research</span> Intelligence Platform</h1>
+    <span class="badge">LangGraph · A2A · MCP · RRF+ColBERT</span>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <h2>Specialist Agents</h2>
+      <div id="agents-list"><div class="empty">Loading agents...</div></div>
+      <h2 style="margin-top:1.5rem">Retrieval Pipeline</h2>
+      <div style="font-size:0.8rem;color:var(--muted);line-height:1.8">
+        1. Dense (embeddings)<br>
+        2. Sparse (BM25)<br>
+        3. RRF fusion<br>
+        4. ColBERT re-rank
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="pipeline" id="pipeline">
+        <div class="pipe-step" data-node="router"><div class="icon">🧠</div>Query Planner</div>
+        <div class="pipe-step" data-node="retrieval_fanout"><div class="icon">⚡</div>Parallel Retrieval</div>
+        <div class="pipe-step" data-node="reflection"><div class="icon">🔍</div>Reflection</div>
+        <div class="pipe-step" data-node="synthesis"><div class="icon">📝</div>Synthesis</div>
+      </div>
+
+      <div class="search-box">
+        <input id="query" type="text" placeholder="Enter a research question..."
+          value="How do A2A and MCP work together in multi-agent systems?" />
+        <button id="search-btn" onclick="startResearch()">Research</button>
+      </div>
+
+      <div id="progress" class="meta" style="display:none"></div>
+      <div id="report-area"><div class="empty">Submit a query to begin deep research</div></div>
+    </main>
+
+    <aside class="panel">
+      <h2>Live Trace</h2>
+      <div id="trace"><div class="empty">Events appear here during research</div></div>
+    </aside>
+  </div>
+
+  <script>
+    const NODE_LABELS = {
+      router: 'Query Planner',
+      retrieval_fanout: 'Parallel Retrieval',
+      reflection: 'Evidence Reflection',
+      synthesis: 'Report Synthesis',
+    };
+
+    const STATUS_ICON = { online: '● Online', busy: '◐ Busy', offline: '○ Offline' };
+
+    async function loadAgents() {
+      try {
+        const res = await fetch('/api/agents/status');
+        const data = await res.json();
+        const el = document.getElementById('agents-list');
+        el.innerHTML = Object.entries(data.agents).map(([key, a]) => {
+          const status = a.status || 'offline';
+          const label = a.label || a.name || key;
+          const icon = STATUS_ICON[status] || STATUS_ICON.offline;
+          const hint = a.error ? `<div class="hint">${a.error}</div>` : '';
+          return `
+          <div class="agent-card">
+            <div class="name">${label}</div>
+            <div class="status ${status}">
+              ${icon} — ${a.skills || 0} skills
+            </div>
+            ${hint}
+          </div>`;
+        }).join('');
+      } catch (e) {
+        document.getElementById('agents-list').innerHTML = '<div class="empty">Coordinator offline</div>';
+      }
+    }
+
+    function setPipelineActive(node) {
+      document.querySelectorAll('.pipe-step').forEach(s => {
+        s.classList.remove('active');
+        if (s.dataset.node === node) s.classList.add('active');
+      });
+    }
+
+    function markPipelineDone(node) {
+      const step = document.querySelector(`[data-node="${node}"]`);
+      if (step) { step.classList.remove('active'); step.classList.add('done'); }
+    }
+
+    function addTrace(text) {
+      const el = document.getElementById('trace');
+      if (el.querySelector('.empty')) el.innerHTML = '';
+      const div = document.createElement('div');
+      div.className = 'trace-event';
+      div.innerHTML = `<span class="time">${new Date().toLocaleTimeString()}</span> ${text}`;
+      el.prepend(div);
+    }
+
+    function linkCitations(text) {
+      return text.replace(/\[(\d+)\]/g, '<a class="cite" href="#ref-$1" title="Jump to reference">[$1]</a>');
+    }
+
+    function formatPaperMarkdown(text) {
+      if (!text) return '';
+      const parts = text.split(/\n(?=## )/);
+      return parts.map(block => {
+        block = block.trim();
+        if (!block) return '';
+        if (block.startsWith('## ')) {
+          const nl = block.indexOf('\n');
+          const heading = block.slice(3, nl > 0 ? nl : undefined).trim();
+          const body = nl > 0 ? block.slice(nl + 1).trim() : '';
+          const paras = body.split(/\n\n+/).map(p => `<p>${linkCitations(p.replace(/\n/g, ' '))}</p>`).join('');
+          return `<h2>${heading}</h2>${paras}`;
+        }
+        return `<p>${linkCitations(block)}</p>`;
+      }).join('');
+    }
+
+    function renderReport(data) {
+      const conf = Math.round((data.confidence || 0) * 100);
+      const wordCount = data.metadata?.word_count || (data.full_text || '').split(/\s+/).length;
+      const sourceCount = data.citations?.length || data.metadata?.source_count || 0;
+      let paperText = data.full_text || data.summary || '';
+      if (paperText.includes('## References')) {
+        paperText = paperText.split('## References')[0].trim();
+      }
+      const paperHtml = formatPaperMarkdown(paperText);
+
+      let refsHtml = '';
+      if (data.citations?.length) {
+        refsHtml = `<div class="ref-list" id="references"><h2>References</h2>` +
+          data.citations.map(c => `
+            <div class="ref-item" id="ref-${c.index}">
+              <span class="idx">[${c.index}]</span>
+              <strong>${c.title}</strong>
+              ${c.source_uri ? `<br><a href="${c.source_uri}" target="_blank" style="color:var(--muted);font-size:0.8rem">${c.source_uri}</a>` : ''}
+              <div style="color:var(--muted);margin-top:0.25rem;font-size:0.8rem">${c.excerpt || ''}</div>
+            </div>
+          `).join('') + '</div>';
+      } else {
+        refsHtml = `<div class="ref-list"><p style="color:var(--warn)">No citations — retrieval agents returned no sources. Restart agents and try again.</p></div>`;
+      }
+
+      const html = `<div class="report">
+        <div class="report-header">
+          <h3>${data.query}</h3>
+          <button class="download-btn" onclick="downloadPaper()">Download .md</button>
+        </div>
+        <div class="meta">
+          <span>Confidence: ${conf}%</span>
+          <span>${sourceCount} sources</span>
+          <span>~${wordCount} words</span>
+        </div>
+        <div class="score-bar"><div class="score-fill" style="width:${conf}%"></div></div>
+        <div class="paper-body" style="margin-top:1.25rem">${paperHtml}</div>
+        ${refsHtml}
+      </div>`;
+
+      document.getElementById('report-area').innerHTML = html;
+      window._lastPaper = data.full_text || data.summary || '';
+    }
+
+    function downloadPaper() {
+      const text = window._lastPaper || '';
+      const blob = new Blob([text], { type: 'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'research-paper.md';
+      a.click();
+    }
+
+    function startResearch() {
+      const query = document.getElementById('query').value.trim();
+      if (!query) return;
+
+      const btn = document.getElementById('search-btn');
+      btn.disabled = true;
+      btn.textContent = 'Researching...';
+
+      document.querySelectorAll('.pipe-step').forEach(s => s.classList.remove('active', 'done'));
+      document.getElementById('trace').innerHTML = '';
+      document.getElementById('progress').style.display = 'flex';
+      document.getElementById('progress').innerHTML = '<span>Starting research...</span>';
+      document.getElementById('report-area').innerHTML = '<div class="empty">Research in progress...</div>';
+
+      addTrace(`Started: "${query}"`);
+
+      const es = new EventSource(`/research/stream?query=${encodeURIComponent(query)}&max_iterations=3`);
+
+      es.addEventListener('node', (e) => {
+        const d = JSON.parse(e.data);
+        setPipelineActive(d.node);
+        addTrace(`<strong>${d.label}</strong> completed`);
+
+        if (d.node === 'router') {
+          document.getElementById('progress').innerHTML =
+            `<span>Agents: ${(d.agents||[]).join(', ')}</span>`;
+          if (d.reasoning) addTrace(d.reasoning.substring(0, 120));
+        }
+        if (d.node === 'retrieval_fanout') {
+          document.getElementById('progress').innerHTML =
+            `<span>${d.total_documents || 0} documents retrieved</span>`;
+        }
+        if (d.node === 'reflection') {
+          const score = Math.round((d.sufficiency_score || 0) * 100);
+          document.getElementById('progress').innerHTML =
+            `<span>Sufficiency: ${score}%</span>` +
+            (d.needs_more ? '<span style="color:var(--warn)">Looping back...</span>' : '');
+          if (d.gaps?.length) addTrace('Gaps: ' + d.gaps.join('; '));
+          markPipelineDone('reflection');
+          if (!d.needs_more) setPipelineActive('synthesis');
+        }
+        markPipelineDone(d.node);
+      });
+
+      es.addEventListener('complete', (e) => {
+        const data = JSON.parse(e.data);
+        renderReport(data);
+        addTrace('Research complete');
+        es.close();
+        btn.disabled = false;
+        btn.textContent = 'Research';
+        document.querySelectorAll('.pipe-step').forEach(s => s.classList.add('done'));
+      });
+
+      es.addEventListener('error', (e) => {
+        let msg = 'Connection lost — research may still be running. Check terminal logs.';
+        if (e.data) {
+          try {
+            const d = JSON.parse(e.data);
+            msg = d.error || msg;
+          } catch (_) {}
+        }
+        document.getElementById('report-area').innerHTML =
+          `<div class="empty" style="color:var(--danger)">Error: ${msg}</div>`;
+        addTrace('Error: ' + msg);
+        es.close();
+        btn.disabled = false;
+        btn.textContent = 'Research';
+        loadAgents();
+      });
+    }
+
+    document.getElementById('query').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') startResearch();
+    });
+
+    loadAgents();
+    setInterval(loadAgents, 10000);
+  </script>
+</body>
+</html>
